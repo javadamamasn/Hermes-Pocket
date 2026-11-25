@@ -31,7 +31,7 @@ android {
     compileSdk = 36  // Latest Stable per ADR-012
 
     defaultConfig {
-        applicationId = "com.hermes.android"
+        applicationId = "com.hermes.android.multiharity"
         minSdk = 29    // Android 10 per ADR-012
         targetSdk = 35 // Latest Stable per ADR-012
         versionCode = 39

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App name — translatable per ADR-013 -->
-    <string name="app_name">Hermes</string>
+    <string name="app_name">Hermes Multi</string>
 
     <!-- Gateway service notification (Step 6) -->
     <string name="notification_channel_gateway_id">hermes_gateway_service</string>
