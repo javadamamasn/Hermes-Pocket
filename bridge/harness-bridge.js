@@ -1698,6 +1698,11 @@ function createBridge(options = {}) {
     while (turnPromises.size) await Promise.allSettled([...turnPromises]);
   };
 
+  // Hermes-only RPCs the UI calls on startup. The bridge cannot implement
+  // them against a CLI harness, but answering with empty/no-op results keeps
+  // the chat screen usable instead of flooding it with -32601 toasts.
+  const configValues = new Map();
+
   const handlers = {
     'harness.list': async () => ({ harnesses: await harnessList() }),
 
@@ -1782,6 +1787,52 @@ function createBridge(options = {}) {
       broadcast('sessions.changed', '', { session_id: '' });
       return { session_id: session.id, title };
     },
+
+    // ── Hermes-only compatibility methods (no-ops for CLI harnesses) ────
+    'config.get': async (params) => ({
+      value: configValues.get(asText(params.key) || '') || '',
+    }),
+    'config.set': async (params) => {
+      const key = asText(params.key) || '';
+      const value = asText(params.value) || '';
+      if (key) configValues.set(key, value);
+      return { ok: true, key, value };
+    },
+    'session.most_recent': async () => {
+      const rows = listSessions(homeDir);
+      const last = rows.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0))[0];
+      return last ? { session_id: last.id, id: last.id, harness: last.harness } : { session_id: '', id: '' };
+    },
+    'session.foreign.list': async () => ({ sessions: [] }),
+    'session.usage': async () => ({ usage: {} }),
+    'model.options': async () => ({ options: [] }),
+    'tools.list': async () => ({ tools: [] }),
+    'tools.configure': async () => ({ ok: true }),
+    'vault.list': async () => ({ vaults: [], items: [] }),
+    'vault.sources': async () => ({ sources: [] }),
+    'connectors.list': async () => ({ connectors: [] }),
+    'connectors.catalog': async () => ({ catalog: [] }),
+    'plugins.list': async () => ({ plugins: [] }),
+    'agents.list': async () => ({ agents: [] }),
+    'skills.reload': async () => ({ ok: true }),
+    'reload.mcp': async () => ({ ok: true }),
+    'reload.env': async () => ({ ok: true }),
+    'client.capabilities': async () => ({ ok: true }),
+    'usage.bars': async () => ({ bars: [] }),
+    'billing.state': async () => ({ state: null }),
+    'subscription.state': async () => ({ state: null }),
+    'free_tier.status': async () => ({ status: null }),
+    'insights.get': async () => ({ insights: [] }),
+    'mcp.servers.list': async () => ({ servers: [] }),
+    'mcp.servers.status': async () => ({ servers: [] }),
+    'process.list': async () => ({ processes: [] }),
+    'approval.respond': async () => ({ ok: true }),
+    'session.compress': async () => ({ ok: true }),
+    'session.branch': async () => ({ ok: true }),
+    'session.steer': async () => ({ ok: true }),
+    'message.react': async () => ({ ok: true }),
+    'prompt.btw': async () => ({ accepted: true }),
+    'prompt.background': async () => ({ accepted: true }),
   };
 
   bridge.dispatch = async (method, params = {}, context = {}) => {
