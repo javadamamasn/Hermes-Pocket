@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hermes.android.data.HarnessGatewayUrls
+import com.hermes.android.data.HarnessPreferences
 import com.hermes.android.domain.session.ChatSessions
 import com.hermes.android.gateway.ConnectionState
 import com.hermes.android.gateway.GatewayClient
@@ -74,6 +76,9 @@ class ChatViewModel @Inject constructor(
     private var connectionWatchJob: Job? = null
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    /** Shared with the settings screen and the gateway service; no extra DI parameters. */
+    private val harnessPrefs = HarnessPreferences.get(context)
 
     /** Kanban is here: switched on in Settings › General, on a runtime that has it. */
     val kanbanAvailable: Boolean get() = kanban?.available == true
@@ -365,7 +370,13 @@ class ChatViewModel @Inject constructor(
             }
 
             try {
-                gatewayClient.connect(url = hermesRuntime.getWebSocketUrl())
+                gatewayClient.connect(
+                    url = HarnessGatewayUrls.connectUrl(
+                        HarnessPreferences.get(context).harness.value,
+                        hermesRuntime.getWebSocketUrl(),
+                        HarnessPreferences.get(context),
+                    ),
+                )
             } catch (e: Exception) {
                 Timber.e(e, "[Chat] Failed to connect to gateway")
                 _uiState.update { it.copy(

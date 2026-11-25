@@ -39,12 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hermes.android.R
+import com.hermes.android.data.HarnessPreferences
 import com.hermes.android.i18n.AppLanguage
 import com.hermes.android.ui.design.GroupDivider
 import com.hermes.android.ui.design.HxIconColors
@@ -121,6 +124,9 @@ internal fun ControlCenterMenu(
 ) {
     val toolsOn = state.availableTools.count { it.enabled }
     val toolsTotal = state.availableTools.size
+    val harnessPrefs = HarnessPreferences.get(LocalContext.current)
+    val harness by harnessPrefs.harness.collectAsStateWithLifecycle()
+    var showHarnessPicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -179,6 +185,14 @@ internal fun ControlCenterMenu(
                 tint = HxIconColors.purple,
                 subtitle = state.activeModel?.let { "${state.activeProvider ?: "?"} / $it" },
                 onClick = { onOpen(SettingsSection.MODELS) },
+            )
+            CcDivider()
+            CcRow(
+                title = t("Agent harness", "عامل هوشمند"),
+                icon = Icons.Default.Terminal,
+                tint = HxIconColors.cyan,
+                value = harness.displayName,
+                onClick = { showHarnessPicker = true },
             )
         }
 
@@ -341,6 +355,8 @@ internal fun ControlCenterMenu(
                 onClick = onNavigateToOps,
             )
         }
+
+        if (showHarnessPicker) HarnessPickerDialog(onDismiss = { showHarnessPicker = false })
     }
 }
 

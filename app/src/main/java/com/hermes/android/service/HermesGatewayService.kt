@@ -1,5 +1,8 @@
 package com.hermes.android.service
 
+import com.hermes.android.data.HarnessGatewayUrls
+import com.hermes.android.data.HarnessPreferences
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -338,7 +341,13 @@ class HermesGatewayService : Service() {
                 status.value = null
                 ensureRuntimeGatewayStarted()
                 status.value = null
-                gatewayClient.connect(url = hermesRuntime.getWebSocketUrl())
+                gatewayClient.connect(
+                    url = HarnessGatewayUrls.connectUrl(
+                        HarnessPreferences.get(applicationContext).harness.value,
+                        hermesRuntime.getWebSocketUrl(),
+                        HarnessPreferences.get(applicationContext),
+                    ),
+                )
             } catch (e: Exception) {
                 Timber.e(e, "[GatewayService] Failed to start/connect gateway")
                 setStatus(tr("Hermes is unavailable", "Hermes در دسترس نیست") + ": ${e.message ?: tr("unknown error", "خطای نامشخص")}")
